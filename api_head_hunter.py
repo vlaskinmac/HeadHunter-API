@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 
@@ -192,6 +193,19 @@ def print_table(vacancies):
     print("\n", table_instance.table)
 
 
+def get_vacancy_from_user():
+    parser = argparse.ArgumentParser(
+        description="The Code collects salary figures for vacancies from two sources: HeadHunter, SuperJob."
+    )
+    vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
+    parser.add_argument(
+        "-v", "--vacancy", nargs="+", default=vacancies, help="Set the vacancies use arguments: '-v or --vacancy'"
+    )
+    args = parser.parse_args()
+    args_vacancy = args.vacancy
+    return args_vacancy
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.WARNING,
@@ -201,9 +215,9 @@ if __name__ == "__main__":
     )
     load_dotenv()
     token = os.getenv("API_KEY_SUPERJOB")
-    vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
+    vacancies = get_vacancy_from_user()
     try:
-        print_table(vacancies)
+        print_table(vacancies=vacancies)
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
         raise exc
