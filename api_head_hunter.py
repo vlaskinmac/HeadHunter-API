@@ -1,4 +1,9 @@
+import logging
+import os
+
 import requests
+from requests import HTTPError
+from dotenv import load_dotenv
 from itertools import count
 from terminaltables import AsciiTable
 
@@ -22,6 +27,7 @@ def predict_rub_salary_hh(vacancies):
             }
             response = requests.get(url, params=param, headers=headers)
             response.raise_for_status()
+            logging.warning(response.status_code)
             data = response.json()
             if page == data["pages"]:
                 break
@@ -45,11 +51,10 @@ def predict_rub_salary_hh(vacancies):
     return vacancy_grouped
 
 
-def predict_rub_salary_sj(vacancies):
+def predict_rub_salary_sj(vacancies, token):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-        "X-Api-App-Id": "v3.h.4249508.8bb4144bfc13d74a77c9b169a4a4a852f7f17007."
-                        "bdd63e3c3748c29557863ca82bea8b2289b02be2"
+        "X-Api-App-Id": f"{token}"
     }
     vacancy_grouped = []
     for vacancy in vacancies:
@@ -67,6 +72,7 @@ def predict_rub_salary_sj(vacancies):
             }
             response = requests.get(url, params=param, headers=headers)
             response.raise_for_status()
+            logging.warning(response.status_code)
             data = response.json()
             if data["total"] // 20 == 0:
                 pages = 1
@@ -96,7 +102,7 @@ def predict_rub_salary_sj(vacancies):
 
 def predict_salary(vacancies):
     hh = predict_rub_salary_hh(vacancies)
-    sj = predict_rub_salary_sj(vacancies)
+    sj = predict_rub_salary_sj(vacancies, token)
     grouped_vacancies = {}
     for vacancy_hh in hh:
         for vacancy_sj in sj:
@@ -124,12 +130,12 @@ def predict_salary(vacancies):
                             "sj_vacancies_processed": value_sj["vacancies_processed"],
                             "sj_avg": int(sj_avg),
                         }
-
     return grouped_vacancies
 
 
 def print_table(vacancies):
     data = predict_salary(vacancies)
+
     title = f"HeadHunter - {data['python']['city']}"
     hh_table_data = [
         ["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]
@@ -186,13 +192,18 @@ def print_table(vacancies):
     print("\n", table_instance.table)
 
 
-def main():
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.WARNING,
+        filename="logs.log",
+        filemode="w",
+        format="%(asctime)s - [%(levelname)s] - %(funcName)s() - [line %(lineno)d] - %(message)s",
+    )
+    load_dotenv()
+    token = os.getenv("API_KEY_SUPERJOB")
     vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
     try:
         print_table(vacancies)
-    except Exception as exc:
-        print(exc)
-
-
-if __name__ == "__main__":
-    main()
+    except (HTTPError, TypeError, KeyError) as exc:
+        logging.warning(exc)
+        raise exc
