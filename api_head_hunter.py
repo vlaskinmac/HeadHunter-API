@@ -115,8 +115,8 @@ def predict_salary(vacancies):
                         vacancies_found_combined = value_sj["vacancies_found"] + value_hh["vacancies_found"]
                         sum_salary_combined = value_sj["sum_salary"] + value_hh["sum_salary"]
                         avg_combined = sum_salary_combined / vacancies_processed_combined_total
-                        hh_avg = value_hh["sum_salary"] / value_hh["vacancies_found"]
-                        sj_avg = value_sj["sum_salary"] / value_sj["vacancies_found"]
+                        hh_avg = value_hh["sum_salary"] / value_hh["vacancies_processed"]
+                        sj_avg = value_sj["sum_salary"] / value_sj["vacancies_processed"]
 
                         grouped_vacancies[key_hh] = {
                             "vacancies_found": vacancies_found_combined,
