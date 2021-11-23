@@ -6,7 +6,7 @@
 
 This script is written as part of the task of the courses [Devman](https://dvmn.org).
 
-<img src="https://user-images.githubusercontent.com/78322994/142894721-2fcf3ab2-e378-4049-8cdb-0711799fd3b4.png" alt="drawing" width="650"/> 
+<img src="https://user-images.githubusercontent.com/78322994/143048314-2136ad76-fe3c-4da3-8853-88d4b70b2672.png" alt="drawing" width="650"/> 
 
 
 ## Getting Started
