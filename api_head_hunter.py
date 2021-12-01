@@ -9,20 +9,29 @@ from itertools import count
 from terminaltables import AsciiTable
 
 
+def collect_salary_avg(salary_from, salary_to):
+    if not salary_from:
+        expected_salary = salary_to * 0.8
+    elif not salary_to:
+        expected_salary = salary_from * 1.2
+    else:
+        expected_salary = (salary_to + salary_from) / 2
+    return expected_salary
+
+
 def predict_rub_salary_hh(vacancies):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
     }
-    vacancy_grouped = []
+    city = 1
     for vacancy in vacancies:
-        grouped_vacancies = {}
-        collect_salary_avg = []
+        salary_group = []
         for page in count():
             url = "https://api.hh.ru/vacancies"
             param = {
                 "text": f"{vacancy}",
-                "area": 1,
-                "period": 7,
+                "area": city,
+                "period": 30,
                 "only_with_salary": "true",
                 "page": page,
             }
@@ -30,41 +39,26 @@ def predict_rub_salary_hh(vacancies):
             response.raise_for_status()
             logging.warning(response.status_code)
             data = response.json()
-            if page == data["pages"]:
+            if page+1 == data["pages"]:
                 break
             for salary in data["items"]:
                 if salary["salary"]["currency"] == "RUR":
-                    if not salary["salary"]["from"]:
-                        expected_salary = salary["salary"]["to"] * 0.8
-                    elif not salary["salary"]["to"]:
-                        expected_salary = salary["salary"]["from"] * 1.2
-                    else:
-                        expected_salary = (salary["salary"]["to"] + salary["salary"]["from"]) / 2
-                    collect_salary_avg.append(int(expected_salary))
-        grouped_vacancies[f"{vacancy}"] = {
-            "vacancies_found": data["found"],
-            "vacancies_processed": len(collect_salary_avg),
-            "sum_salary": int(sum(collect_salary_avg)),
-            "language": vacancy,
-            "city": salary["area"]["name"]
-        }
-        vacancy_grouped.append(grouped_vacancies)
-    return vacancy_grouped
+                    if salary["salary"]["from"] or salary["salary"]["to"]:
+                        salary_avg = collect_salary_avg(salary["salary"]["from"], salary["salary"]["to"])
+                        salary_group.append(salary_avg)
+        return data["found"], salary_group, salary["area"]["name"]
 
 
 def predict_rub_salary_sj(vacancies, token):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-        "X-Api-App-Id": f"{token}"
+        "X-Api-App-Id": token,
     }
-    vacancy_grouped = []
     for vacancy in vacancies:
-        grouped_vacancies = {}
-        collect_salary_avg = []
         for page in count():
             url = "https://api.superjob.ru/2.0/vacancies"
             param = {
-                "period": 7,
+                "period": 30,
                 "town": "Москва",
                 "keywords": f"{vacancy}",
                 "payment_no_agreement": 1,
@@ -75,129 +69,85 @@ def predict_rub_salary_sj(vacancies, token):
             response.raise_for_status()
             logging.warning(response.status_code)
             data = response.json()
-            if data["total"] // 20 == 0:
-                pages = 1
-            else:
-                pages = data["total"] // 20
-            if page == pages:
+            if page+1 == data["total"]:
                 break
+            salary_group = []
             for salary in data["objects"]:
-                if not salary["payment_from"]:
-                    expected_salary = salary["payment_to"] * 0.8
-                elif not salary["payment_to"]:
-                    expected_salary = salary["payment_from"] * 1.2
-                else:
-                    expected_salary = (salary["payment_to"] + salary["payment_from"]) / 2
-                if int(expected_salary) != 0:
-                    collect_salary_avg.append(int(expected_salary))
-            grouped_vacancies[f"{vacancy}"] = {
-                "vacancies_found": data["total"],
-                "vacancies_processed": len(collect_salary_avg),
-                "sum_salary": int(sum(collect_salary_avg)),
-                "language": vacancy,
-                "city": salary["town"]["title"]
-            }
-        vacancy_grouped.append(grouped_vacancies)
-    return vacancy_grouped
+                if salary["payment_from"] or salary["payment_to"]:
+                    salary_avg = collect_salary_avg(salary["payment_from"], salary["payment_to"])
+                    salary_group.append(salary_avg)
+        return data["total"], salary_group, salary["town"]["title"]
 
 
-def predict_salary(vacancies):
-    hh = predict_rub_salary_hh(vacancies)
-    sj = predict_rub_salary_sj(vacancies, token)
+def grouped_vacancies_hh(vacancies):
     grouped_vacancies = {}
-    for vacancy_hh in hh:
-        for vacancy_sj in sj:
-            for key_hh, value_hh in vacancy_hh.items():
-                for key_sj, value_sj in vacancy_sj.items():
-                    if key_hh == key_sj:
-                        vacancies_processed_combined_total = value_sj["vacancies_processed"] + value_hh[
-                            "vacancies_processed"]
-                        vacancies_found_combined = value_sj["vacancies_found"] + value_hh["vacancies_found"]
-                        sum_salary_combined = value_sj["sum_salary"] + value_hh["sum_salary"]
-                        avg_combined = sum_salary_combined / vacancies_processed_combined_total
-                        hh_avg = value_hh["sum_salary"] / value_hh["vacancies_processed"]
-                        sj_avg = value_sj["sum_salary"] / value_sj["vacancies_processed"]
-
-                        grouped_vacancies[key_hh] = {
-                            "vacancies_found": vacancies_found_combined,
-                            "vacancies_processed": vacancies_processed_combined_total,
-                            "language": value_sj["language"],
-                            "avg": int(avg_combined),
-                            "city": value_sj["city"],
-                            "hh_vacancies_found": value_hh["vacancies_found"],
-                            "hh_vacancies_processed": value_hh["vacancies_processed"],
-                            "hh_avg": int(hh_avg),
-                            "sj_vacancies_found": value_sj["vacancies_found"],
-                            "sj_vacancies_processed": value_sj["vacancies_processed"],
-                            "sj_avg": int(sj_avg),
-                        }
+    for vacancy in vacancies:
+        vacancies_found, salary_group, city = predict_rub_salary_hh(vacancy)
+        salary_avg = int(sum(salary_group)) / len(salary_group)
+        grouped_vacancies[f"{vacancy}"] = {
+            "vacancies_found": vacancies_found,
+            "vacancies_processed": len(salary_group),
+            "sum_salary": int(salary_avg),
+            "city": city
+        }
     return grouped_vacancies
 
 
-def print_table(vacancies):
-    data = predict_salary(vacancies)
+def grouped_vacancies_sj(vacancies, token):
+    grouped_vacancies = {}
+    for vacancy in vacancies:
+        vacancies_found, salary_group, city = predict_rub_salary_sj(vacancy, token=token)
+        salary_avg = int(sum(salary_group)) / len(salary_group)
+        grouped_vacancies[f"{vacancy}"] = {
+            "vacancies_found": vacancies_found,
+            "vacancies_processed": len(salary_group),
+            "sum_salary": int(salary_avg),
+            "city": city
+        }
+    return grouped_vacancies
 
-    title = f"HeadHunter - {data['python']['city']}"
-    hh_table_data = [
-        ["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]
-    ]
 
-    for final_data in data.values():
-        hh_table_data.append(
-            [
-                final_data["language"], final_data["hh_vacancies_found"], final_data["hh_vacancies_processed"],
-                final_data["hh_avg"],
-            ]
-        )
+def print_table_hh(vacancies):
+    vacancies_hh = grouped_vacancies_hh(vacancies)
+    for final_data_language in vacancies:
+        title_hh = f"HeadHunter - {vacancies_hh[final_data_language]['city']}"
+        hh_table_data = [
+            ["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]
+        ]
+        for final_data_language in vacancies:
+            hh_table_data.append(
+                [
+                    final_data_language, vacancies_hh[final_data_language]["vacancies_found"],
+                    vacancies_hh[final_data_language]["vacancies_processed"],
+                    vacancies_hh[final_data_language]["sum_salary"],
+                ]
+            )
+    return hh_table_data, title_hh
 
-    table_instance = AsciiTable(hh_table_data, title)
-    table_instance.justify_columns[3] = "right"
-    table_instance.justify_columns[1] = "center"
-    table_instance.justify_columns[2] = "center"
-    print("\n", table_instance.table)
 
-    title = f"SuperJob - {data['python']['city']}"
-    sj_table_data = [
-        ["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]
-    ]
-    for final_data in data.values():
-        sj_table_data.append(
-            [
-                final_data["language"], final_data["sj_vacancies_found"], final_data["sj_vacancies_processed"],
-                final_data["sj_avg"],
-            ]
-        )
-
-    table_instance = AsciiTable(sj_table_data, title)
-    table_instance.justify_columns[3] = "right"
-    table_instance.justify_columns[1] = "center"
-    table_instance.justify_columns[2] = "center"
-    print("\n", table_instance.table)
-
-    title = f"Combined table: SuperJob and HeadHunter - {data['python']['city']}"
-    combined_table_data = [
-        ["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]
-    ]
-    for final_data in data.values():
-        combined_table_data.append(
-            [
-                final_data["language"], final_data["vacancies_found"], final_data["vacancies_processed"],
-                final_data["avg"],
-            ]
-        )
-
-    table_instance = AsciiTable(combined_table_data, title)
-    table_instance.justify_columns[3] = "right"
-    table_instance.justify_columns[1] = "center"
-    table_instance.justify_columns[2] = "center"
-    print("\n", table_instance.table)
+def print_table_sj(vacancies, token):
+    vacancies_sj = grouped_vacancies_sj(vacancies=vacancies, token=token)
+    for final_data_language in vacancies:
+        title_sj = f"SuperJob - {vacancies_sj[final_data_language]['city']}"
+        sj_table_data = [
+            ["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]
+        ]
+        for final_data_language in vacancies:
+            sj_table_data.append(
+                [
+                    final_data_language, vacancies_sj[final_data_language]["vacancies_found"],
+                    vacancies_sj[final_data_language]["vacancies_processed"],
+                    vacancies_sj[final_data_language]["sum_salary"],
+                ]
+            )
+    return sj_table_data, title_sj
 
 
 def get_vacancy_from_user():
     parser = argparse.ArgumentParser(
         description="The Code collects salary figures for vacancies from two sources: HeadHunter, SuperJob."
     )
-    vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
+    vacancies = ["golang", "javascript", "typescript"]
     parser.add_argument(
         "-v", "--vacancy", nargs="+", default=vacancies, help="Set the vacancies use arguments: '-v or --vacancy'"
     )
@@ -217,7 +167,19 @@ if __name__ == "__main__":
     token = os.getenv("API_KEY_SUPERJOB")
     vacancies = get_vacancy_from_user()
     try:
-        print_table(vacancies=vacancies)
+        hh_table_data, title_hh = print_table_hh(vacancies=vacancies)
+        table_instance = AsciiTable(hh_table_data, title_hh)
+        table_instance.justify_columns[3] = "right"
+        table_instance.justify_columns[1] = "center"
+        table_instance.justify_columns[2] = "center"
+        print("\n", table_instance.table)
+
+        sj_table_data, title_sj = print_table_sj(vacancies=vacancies, token=token)
+        table_instance = AsciiTable(sj_table_data, title_sj)
+        table_instance.justify_columns[3] = "right"
+        table_instance.justify_columns[1] = "center"
+        table_instance.justify_columns[2] = "center"
+        print("\n", table_instance.table)
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
         raise exc

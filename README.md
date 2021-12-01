@@ -6,8 +6,6 @@
 
 This script is written as part of the task of the courses [Devman](https://dvmn.org).
 
-<img src="https://user-images.githubusercontent.com/78322994/143048314-2136ad76-fe3c-4da3-8853-88d4b70b2672.png" alt="drawing" width="650"/> 
-
 
 ## Getting Started
 
@@ -53,8 +51,6 @@ $ python api_head_hunter.py
 
 ```
 
-
-## Launch code
 #### Arguments
 - Set the vacancies use arguments: **-v** or **--vacancy**
 - To call help, use the required arguments **-h** or **--help**
@@ -72,11 +68,11 @@ $ python api_head_hunter.py -v javascript c++ python
 
 ```
 
-Running code without arguments the default period is once every 24 hours.
+Running code without arguments the default period is 30 days.
 
 By default, a set of vacancies by keywords is set:
 
-python, javascript, golang, java, c++, typescript, c#
+"golang", "javascript", "typescript"
 
 ```python
 $ python api_head_hunter.py
