@@ -9,7 +9,7 @@ from itertools import count
 from terminaltables import AsciiTable
 
 
-def collect_salary_avg(salary_from, salary_to):
+def predict_salary_avg(salary_from, salary_to):
     if not salary_from:
         expected_salary = salary_to * 0.8
     elif not salary_to:
@@ -19,7 +19,7 @@ def collect_salary_avg(salary_from, salary_to):
     return expected_salary
 
 
-def predict_rub_salary_hh(vacancies):
+def predict_rub_salary_hh(vacancies, period):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
     }
@@ -31,7 +31,7 @@ def predict_rub_salary_hh(vacancies):
             param = {
                 "text": f"{vacancy}",
                 "area": city,
-                "period": 30,
+                "period": period,
                 "only_with_salary": "true",
                 "page": page,
             }
@@ -44,12 +44,12 @@ def predict_rub_salary_hh(vacancies):
             for salary in data["items"]:
                 if salary["salary"]["currency"] == "RUR":
                     if salary["salary"]["from"] or salary["salary"]["to"]:
-                        salary_avg = collect_salary_avg(salary["salary"]["from"], salary["salary"]["to"])
+                        salary_avg = predict_salary_avg(salary["salary"]["from"], salary["salary"]["to"])
                         salary_group.append(salary_avg)
         return data["found"], salary_group, salary["area"]["name"]
 
 
-def predict_rub_salary_sj(vacancies, token):
+def predict_rub_salary_sj(vacancies, token, period):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
         "X-Api-App-Id": token,
@@ -58,7 +58,7 @@ def predict_rub_salary_sj(vacancies, token):
         for page in count():
             url = "https://api.superjob.ru/2.0/vacancies"
             param = {
-                "period": 30,
+                "period": period,
                 "town": "Москва",
                 "keywords": f"{vacancy}",
                 "payment_no_agreement": 1,
@@ -74,15 +74,15 @@ def predict_rub_salary_sj(vacancies, token):
             salary_group = []
             for salary in data["objects"]:
                 if salary["payment_from"] or salary["payment_to"]:
-                    salary_avg = collect_salary_avg(salary["payment_from"], salary["payment_to"])
+                    salary_avg = predict_salary_avg(salary["payment_from"], salary["payment_to"])
                     salary_group.append(salary_avg)
         return data["total"], salary_group, salary["town"]["title"]
 
 
-def grouped_vacancies_hh(vacancies):
+def grouped_vacancies_hh(vacancies, period):
     grouped_vacancies = {}
     for vacancy in vacancies:
-        vacancies_found, salary_group, city = predict_rub_salary_hh(vacancy)
+        vacancies_found, salary_group, city = predict_rub_salary_hh(vacancy, period)
         salary_avg = int(sum(salary_group)) / len(salary_group)
         grouped_vacancies[f"{vacancy}"] = {
             "vacancies_found": vacancies_found,
@@ -93,10 +93,10 @@ def grouped_vacancies_hh(vacancies):
     return grouped_vacancies
 
 
-def grouped_vacancies_sj(vacancies, token):
+def grouped_vacancies_sj(vacancies, token, period):
     grouped_vacancies = {}
     for vacancy in vacancies:
-        vacancies_found, salary_group, city = predict_rub_salary_sj(vacancy, token=token)
+        vacancies_found, salary_group, city = predict_rub_salary_sj(vacancy, token, period)
         salary_avg = int(sum(salary_group)) / len(salary_group)
         grouped_vacancies[f"{vacancy}"] = {
             "vacancies_found": vacancies_found,
@@ -107,8 +107,8 @@ def grouped_vacancies_sj(vacancies, token):
     return grouped_vacancies
 
 
-def print_table_hh(vacancies):
-    vacancies_hh = grouped_vacancies_hh(vacancies)
+def print_table_hh(vacancies, period):
+    vacancies_hh = grouped_vacancies_hh(vacancies, period)
     for final_data_language in vacancies:
         title_hh = f"HeadHunter - {vacancies_hh[final_data_language]['city']}"
         hh_table_data = [
@@ -125,8 +125,8 @@ def print_table_hh(vacancies):
     return hh_table_data, title_hh
 
 
-def print_table_sj(vacancies, token):
-    vacancies_sj = grouped_vacancies_sj(vacancies=vacancies, token=token)
+def print_table_sj(vacancies, token, period):
+    vacancies_sj = grouped_vacancies_sj(vacancies, token, period)
     for final_data_language in vacancies:
         title_sj = f"SuperJob - {vacancies_sj[final_data_language]['city']}"
         sj_table_data = [
@@ -151,9 +151,13 @@ def get_vacancy_from_user():
     parser.add_argument(
         "-v", "--vacancy", nargs="+", default=vacancies, help="Set the vacancies use arguments: '-v or --vacancy'"
     )
+    parser.add_argument(
+        "-p", "--period", nargs="+", default=30, help="Set the period use arguments: '-p or --period'"
+    )
     args = parser.parse_args()
     args_vacancy = args.vacancy
-    return args_vacancy
+    args_period = args.period
+    return args_vacancy, args_period
 
 
 if __name__ == "__main__":
@@ -165,16 +169,16 @@ if __name__ == "__main__":
     )
     load_dotenv()
     token = os.getenv("API_KEY_SUPERJOB")
-    vacancies = get_vacancy_from_user()
+    vacancies, period = get_vacancy_from_user()
     try:
-        hh_table_data, title_hh = print_table_hh(vacancies=vacancies)
+        hh_table_data, title_hh = print_table_hh(vacancies, period)
         table_instance = AsciiTable(hh_table_data, title_hh)
         table_instance.justify_columns[3] = "right"
         table_instance.justify_columns[1] = "center"
         table_instance.justify_columns[2] = "center"
         print("\n", table_instance.table)
 
-        sj_table_data, title_sj = print_table_sj(vacancies=vacancies, token=token)
+        sj_table_data, title_sj = print_table_sj(vacancies, token, period)
         table_instance = AsciiTable(sj_table_data, title_sj)
         table_instance.justify_columns[3] = "right"
         table_instance.justify_columns[1] = "center"
@@ -183,3 +187,6 @@ if __name__ == "__main__":
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
         raise exc
+
+
+
