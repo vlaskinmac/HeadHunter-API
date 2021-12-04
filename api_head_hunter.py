@@ -107,7 +107,7 @@ def grouped_vacancies_sj(vacancies, token, period):
     return grouped_vacancies
 
 
-def print_table_hh(vacancies, period):
+def statistic_for_table_hh(vacancies, period):
     vacancies_hh = grouped_vacancies_hh(vacancies, period)
     for final_data_language in vacancies:
         title_hh = f"HeadHunter - {vacancies_hh[final_data_language]['city']}"
@@ -125,7 +125,7 @@ def print_table_hh(vacancies, period):
     return hh_table_data, title_hh
 
 
-def print_table_sj(vacancies, token, period):
+def statistic_for_table_sj(vacancies, token, period):
     vacancies_sj = grouped_vacancies_sj(vacancies, token, period)
     for final_data_language in vacancies:
         title_sj = f"SuperJob - {vacancies_sj[final_data_language]['city']}"
@@ -160,6 +160,14 @@ def get_vacancy_from_user():
     return args_vacancy, args_period
 
 
+def build_table(hh_table_data, title_hh):
+    table_instance = AsciiTable(hh_table_data, title_hh)
+    table_instance.justify_columns[3] = "right"
+    table_instance.justify_columns[1] = "center"
+    table_instance.justify_columns[2] = "center"
+    return table_instance.table
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.WARNING,
@@ -171,19 +179,21 @@ if __name__ == "__main__":
     token = os.getenv("API_KEY_SUPERJOB")
     vacancies, period = get_vacancy_from_user()
     try:
-        hh_table_data, title_hh = print_table_hh(vacancies, period)
-        table_instance = AsciiTable(hh_table_data, title_hh)
-        table_instance.justify_columns[3] = "right"
-        table_instance.justify_columns[1] = "center"
-        table_instance.justify_columns[2] = "center"
-        print("\n", table_instance.table)
+        hh_table_data, title_hh = statistic_for_table_hh(vacancies, period)
+        print(build_table(hh_table_data, title_hh))
+        # table_instance = AsciiTable(hh_table_data, title_hh)
+        # table_instance.justify_columns[3] = "right"
+        # table_instance.justify_columns[1] = "center"
+        # table_instance.justify_columns[2] = "center"
+        # print("\n", table_instance.table)
 
-        sj_table_data, title_sj = print_table_sj(vacancies, token, period)
-        table_instance = AsciiTable(sj_table_data, title_sj)
-        table_instance.justify_columns[3] = "right"
-        table_instance.justify_columns[1] = "center"
-        table_instance.justify_columns[2] = "center"
-        print("\n", table_instance.table)
+        sj_table_data, title_sj = statistic_for_table_sj(vacancies, token, period)
+        print(build_table(sj_table_data, title_sj))
+        # table_instance = AsciiTable(sj_table_data, title_sj)
+        # table_instance.justify_columns[3] = "right"
+        # table_instance.justify_columns[1] = "center"
+        # table_instance.justify_columns[2] = "center"
+        # print("\n", table_instance.table)
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
         raise exc
