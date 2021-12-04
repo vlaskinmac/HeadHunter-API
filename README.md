@@ -53,7 +53,9 @@ $ python api_head_hunter.py
 
 #### Arguments
 - Set the vacancies use arguments: **-v** or **--vacancy**
+- - Set the period use arguments: **-p** or **--period**
 - To call help, use the required arguments **-h** or **--help**
+
 
 **Examples of commands:**
 
@@ -68,11 +70,16 @@ $ python api_head_hunter.py -v javascript c++ python
 
 ```
 
+```python
+$ python api_head_hunter.py -v javascript c++ python -p 7
+
+```
+
 Running code without arguments the default period is 30 days.
 
 By default, a set of vacancies by keywords is set:
 
-"golang", "javascript", "typescript"
+"python", "javascript", "golang", "java", "c++", "typescript", "c#"
 
 ```python
 $ python api_head_hunter.py
