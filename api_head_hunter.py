@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+from pprint import pprint
 
 import requests
 from requests import HTTPError
@@ -39,13 +40,15 @@ def predict_rub_salary_hh(vacancies, period):
             response.raise_for_status()
             logging.warning(response.status_code)
             data = response.json()
-            if page+1 == data["pages"]:
+            if page+1 == data["pages"]+1:
                 break
+            # print(page, data["pages"])
             for salary in data["items"]:
                 if salary["salary"]["currency"] == "RUR":
                     if salary["salary"]["from"] or salary["salary"]["to"]:
                         salary_avg = predict_salary_avg(salary["salary"]["from"], salary["salary"]["to"])
                         salary_group.append(salary_avg)
+
         return data["found"], salary_group, salary["area"]["name"]
 
 
@@ -55,6 +58,7 @@ def predict_rub_salary_sj(vacancies, token, period):
         "X-Api-App-Id": token,
     }
     for vacancy in vacancies:
+        salary_group = []
         for page in count():
             url = "https://api.superjob.ru/2.0/vacancies"
             param = {
@@ -69,13 +73,14 @@ def predict_rub_salary_sj(vacancies, token, period):
             response.raise_for_status()
             logging.warning(response.status_code)
             data = response.json()
-            if page+1 == data["total"]:
+            if page == data["total"]+1:
                 break
-            salary_group = []
+            print(page, data["total"])
             for salary in data["objects"]:
                 if salary["payment_from"] or salary["payment_to"]:
                     salary_avg = predict_salary_avg(salary["payment_from"], salary["payment_to"])
                     salary_group.append(salary_avg)
+        pprint(salary_group)
         return data["total"], salary_group, salary["town"]["title"]
 
 
@@ -179,8 +184,10 @@ if __name__ == "__main__":
     token = os.getenv("API_KEY_SUPERJOB")
     vacancies, period = get_vacancy_from_user()
     try:
-        hh_table_data, title_hh = statistic_for_table_hh(vacancies, period)
-        print(build_table(hh_table_data, title_hh))
+        # hh_table_data, title_hh = statistic_for_table_hh(vacancies, period)
+        # print(build_table(hh_table_data, title_hh))
+
+
         # table_instance = AsciiTable(hh_table_data, title_hh)
         # table_instance.justify_columns[3] = "right"
         # table_instance.justify_columns[1] = "center"
