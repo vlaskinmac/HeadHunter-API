@@ -166,7 +166,7 @@ def get_vacancy_from_user():
         help="Set the vacancies use arguments: '-v or --vacancy'"
     )
     parser.add_argument(
-        "-p", "--period", nargs="+", default=30, help="Set the period use arguments: '-p or --period'"
+        "-p", "--period", default=30, help="Set the period use arguments: '-p or --period'"
     )
     args = parser.parse_args()
     args_vacancy = args.vacancy

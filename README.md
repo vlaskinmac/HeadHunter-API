@@ -41,7 +41,7 @@ pip3 install -r requirements.txt
 You need to create a `.env` file and write all sensitive data into it, like this:
 
 ```python
-API_KEY_SUPERJOB="v3.h.4249508.8bb4144bfc13d74a77c9b169a4a4a852f7f17007
+API_KEY_SUPERJOB="v3.h.4249508.8bb4144bfc13d74a77c9b169a4a4a852f7f17007"
 ```
 
 ## Launch code
