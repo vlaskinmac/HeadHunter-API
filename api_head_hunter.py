@@ -10,7 +10,7 @@ from terminaltables import AsciiTable
 
 
 def predict_avg_salary(salary_from, salary_to):
-    if not salary_from or salary_to:
+    if salary_from or salary_to:
         if not salary_from:
             expected_salary = salary_to * 0.8
         elif not salary_to:
@@ -24,8 +24,8 @@ def predict_rub_salary_hh(vacancy, period):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
     }
-    salary_group = []
-    page = 1
+    salaries_group = []
+    page = 0
     url = "https://api.hh.ru/vacancies"
     param = {
         "text": vacancy,
@@ -33,19 +33,19 @@ def predict_rub_salary_hh(vacancy, period):
         "page": page,
     }
     while True:
-        response = requests.get(url, params=param, headers=headers)
-        response.raise_for_status()
-        logging.warning(response.status_code)
-        response_set = response.json()
-        if page == response_set["pages"]:
+        response_page = requests.get(url, params=param, headers=headers)
+        response_page.raise_for_status()
+        logging.warning(response_page.status_code)
+        response_vacancy = response_page.json()
+        if page == response_vacancy["pages"]-1:
             break
-        for salary in response_set["items"]:
-            if salary["salary"] and salary["salary"]["currency"] == "RUR":
-                    expected_salary = predict_avg_salary(salary["salary"]["from"], salary["salary"]["to"])
+        for vacancy in response_vacancy["items"]:
+            if vacancy["salary"] and vacancy["salary"]["currency"] == "RUR":
+                    expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
                     if expected_salary:
-                        salary_group.append(expected_salary)
+                        salaries_group.append(expected_salary)
         page += 1
-    return response_set["found"], salary_group
+    return response_vacancy["found"], salaries_group
 
 
 def predict_rub_salary_sj(vacancy, token, period):
@@ -53,7 +53,7 @@ def predict_rub_salary_sj(vacancy, token, period):
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
         "X-Api-App-Id": token,
     }
-    salary_group = []
+    salaries_group = []
     page = 0
     url = "https://api.superjob.ru/2.0/vacancies"
     while True:
@@ -62,63 +62,62 @@ def predict_rub_salary_sj(vacancy, token, period):
             "town": "Москва",
             "keywords": vacancy,
             "currency": "rub",
-            "count": 20,
+            "count": 100,
             "page": page,
         }
-        response = requests.get(url, params=param, headers=headers)
-        response.raise_for_status()
-        logging.warning(response.status_code)
-        collecting_sj = response.json()
-        if collecting_sj['more']:
-            if page >= collecting_sj["total"]:
+        response_page = requests.get(url, params=param, headers=headers)
+        response_page.raise_for_status()
+        logging.warning(response_page.status_code)
+        collecting_vacancies_sj = response_page.json()
+        if collecting_vacancies_sj['more']:
+            if page >= collecting_vacancies_sj["total"]:
                 break
-        else:
-            if page >= collecting_sj["total"]:
-                break
-        for salary in collecting_sj["objects"]:
-            expected_salary = predict_avg_salary(salary["payment_from"], salary["payment_to"])
+        if page >= collecting_vacancies_sj["total"]:
+            break
+        for vacancy in collecting_vacancies_sj["objects"]:
+            expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
-                salary_group.append(expected_salary)
+                salaries_group.append(expected_salary)
         page += 1
-        sj_collecting = collecting_sj["total"]
-    return sj_collecting, salary_group
+        sj_collecting_vacancies = collecting_vacancies_sj["total"]
+    return sj_collecting_vacancies, salaries_group
 
 
-def groups_vacancies_sj(set_vacancies, token, period):
-    vacancy_grouped = {}
-    for vacancy in set_vacancies:
+def rouping_vacancies_sj(collection_vacancies, token, period):
+    grouped_vacancy = {}
+    for vacancy in collection_vacancies:
         total_vacansies_sj, salary_group = predict_rub_salary_sj(vacancy, token, period)
         grouped_vacancies = {
             "vacancies_found": total_vacansies_sj,
             "vacancies_processed": len(salary_group),
-            "salary_avg": int(int(sum(salary_group)) / len(salary_group)),
+            "salary_avg": int(sum(salary_group) / len(salary_group)),
         }
-        vacancy_grouped[vacancy] = grouped_vacancies
-    return vacancy_grouped
+        grouped_vacancy[vacancy] = grouped_vacancies
+    return grouped_vacancy
 
 
-def groups_vacancies_hh(set_vacancies, period):
-    vacancy_grouped = {}
+def rouping_vacancies_hh(collection_vacancies, period):
+    grouped_vacancy = {}
 
-    for vacancy in set_vacancies:
+    for vacancy in collection_vacancies:
 
         total_vacansies_hh, salary_group = predict_rub_salary_hh(vacancy, period)
         grouped_vacancies = {
             "vacancies_found": total_vacansies_hh,
             "vacancies_processed": len(salary_group),
-            "salary_avg": int(int(sum(salary_group)) / len(salary_group)),
+            "salary_avg": int(sum(salary_group) / len(salary_group)),
         }
-        vacancy_grouped[vacancy] = grouped_vacancies
-    return vacancy_grouped
+        grouped_vacancy[vacancy] = grouped_vacancies
+    return grouped_vacancy
 
 
 def get_vacancy_from_user():
     parser = argparse.ArgumentParser(
         description="The Code collects salary figures for vacancies from two sources: HeadHunter, SuperJob."
     )
-    set_vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
+    collection_vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
     parser.add_argument(
-        "-v", "--vacancy", nargs="+", default=set_vacancies,
+        "-v", "--vacancy", nargs="+", default=collection_vacancies,
         help="Set the vacancies use arguments: '-v or --vacancy'"
     )
     parser.add_argument(
@@ -158,11 +157,11 @@ if __name__ == "__main__":
     )
     load_dotenv()
     token = os.getenv("API_KEY_SUPERJOB")
-    set_vacancies, period = get_vacancy_from_user()
+    collection_vacancies, period = get_vacancy_from_user()
     try:
-        vacancies_sj = groups_vacancies_sj(set_vacancies, token, period)
+        vacancies_sj = rouping_vacancies_sj(collection_vacancies, token, period)
         build_table(vacancies_sj, "SuperJob")
-        vacancies_hh = groups_vacancies_hh(set_vacancies, period)
+        vacancies_hh = rouping_vacancies_hh(collection_vacancies, period)
         build_table(vacancies_hh, "HeadHunter")
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
