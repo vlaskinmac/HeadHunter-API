@@ -85,9 +85,9 @@ def predict_rub_salary_sj(vacancy, token, period):
     return collecting_vacancies_sj["total"], salaries
 
 
-def rouping_vacancies_sj(collection_vacancies, token, period):
+def rouping_vacancies_sj(vacancies, token, period):
     grouped_vacancy = {}
-    for vacancy in collection_vacancies:
+    for vacancy in vacancies:
         total_vacansies_sj, salary_group = predict_rub_salary_sj(vacancy, token, period)
         grouped_vacancies = {
             "vacancies_found": total_vacansies_sj,
@@ -98,10 +98,10 @@ def rouping_vacancies_sj(collection_vacancies, token, period):
     return grouped_vacancy
 
 
-def rouping_vacancies_hh(collection_vacancies, period):
+def rouping_vacancies_hh(vacancies, period):
     grouped_vacancy = {}
 
-    for vacancy in collection_vacancies:
+    for vacancy in vacancies:
 
         total_vacansies_hh, salary_group = predict_rub_salary_hh(vacancy, period)
         grouped_vacancies = {
@@ -117,9 +117,9 @@ def get_vacancy_from_user():
     parser = argparse.ArgumentParser(
         description="The Code collects salary figures for vacancies from two sources: HeadHunter, SuperJob."
     )
-    collection_vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
+    vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
     parser.add_argument(
-        "-v", "--vacancy", nargs="+", default=collection_vacancies,
+        "-v", "--vacancy", nargs="+", default=vacancies,
         help="Set the vacancies use arguments: '-v or --vacancy'"
     )
     parser.add_argument(
@@ -159,11 +159,11 @@ if __name__ == "__main__":
     )
     load_dotenv()
     token = os.getenv("API_KEY_SUPERJOB")
-    collection_vacancies, period = get_vacancy_from_user()
+    vacancies, period = get_vacancy_from_user()
     try:
-        vacancies_sj = rouping_vacancies_sj(collection_vacancies, token, period)
+        vacancies_sj = rouping_vacancies_sj(vacancies, token, period)
         build_table(vacancies_sj, "SuperJob")
-        vacancies_hh = rouping_vacancies_hh(collection_vacancies, period)
+        vacancies_hh = rouping_vacancies_hh(vacancies, period)
         build_table(vacancies_hh, "HeadHunter")
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
