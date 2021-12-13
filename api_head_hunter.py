@@ -103,9 +103,9 @@ def rouping_vacancies_hh(vacancies, period):
 
     for vacancy in vacancies:
 
-        total_vacansies_hh, salary_group = predict_rub_salary_hh(vacancy, period)
+        total_vacansies, salary_group = predict_rub_salary_hh(vacancy, period)
         grouped_vacancies = {
-            "vacancies_found": total_vacansies_hh,
+            "vacancies_found": total_vacansies,
             "vacancies_processed": len(salary_group),
             "salary_avg": int(sum(salary_group) / len(salary_group)),
         }
