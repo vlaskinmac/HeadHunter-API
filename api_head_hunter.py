@@ -68,29 +68,29 @@ def predict_rub_salary_sj(vacancy, token, period):
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
-        collecting_vacancies_sj = response_page.json()
-        if collecting_vacancies_sj['more']:
-            if page >= collecting_vacancies_sj["total"]:
+        collecting_vacancies = response_page.json()
+        if collecting_vacancies['more']:
+            if page >= collecting_vacancies["total"]:
                 break
-        if page >= collecting_vacancies_sj["total"]:
+        if page >= collecting_vacancies["total"]:
             break
-        for vacancy in collecting_vacancies_sj["objects"]:
+        for vacancy in collecting_vacancies["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
                 salaries.append(expected_salary)
         param['page'] += 1
-        # sj_collecting_vacancies = collecting_vacancies_sj["total"]
+        # sj_collecting_vacancies = collecting_vacancies["total"]
     # return sj_collecting_vacancies, salaries
-    print(collecting_vacancies_sj["total"])
-    return collecting_vacancies_sj["total"], salaries
+    print(collecting_vacancies["total"])
+    return collecting_vacancies["total"], salaries
 
 
 def rouping_vacancies_sj(vacancies, token, period):
     grouped_vacancy = {}
     for vacancy in vacancies:
-        total_vacansies_sj, salary_group = predict_rub_salary_sj(vacancy, token, period)
+        total_vacansies, salary_group = predict_rub_salary_sj(vacancy, token, period)
         grouped_vacancies = {
-            "vacancies_found": total_vacansies_sj,
+            "vacancies_found": total_vacansies,
             "vacancies_processed": len(salary_group),
             "salary_avg": int(sum(salary_group) / len(salary_group)),
         }
