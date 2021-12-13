@@ -70,10 +70,12 @@ def predict_rub_salary_sj(vacancy, token, period):
         logging.warning(response_page.status_code)
         collecting_vacancies = response_page.json()
         if collecting_vacancies['more']:
-            if page >= collecting_vacancies["total"]:
-                break
-        if page >= collecting_vacancies["total"]:
             break
+        # if collecting_vacancies['more']:
+        #     if page >= collecting_vacancies["total"]:
+        #         break
+        # if page >= collecting_vacancies["total"]:
+        #     break
         for vacancy in collecting_vacancies["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
