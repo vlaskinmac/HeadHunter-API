@@ -82,33 +82,32 @@ def predict_rub_salary_sj(vacancy, token, period):
     return collecting_vacancies["total"], salaries
 
 
-def rouping_vacancies_sj(vacancies, token, period):
+def grouping_vacancies_sj(vacancies, token, period):
     grouped_vacancy = {}
     for vacancy in vacancies:
         total_vacansies, salaries = predict_rub_salary_sj(vacancy, token, period)
-        # print(salaries)
-        # if salaries:
-        # salary_avg = int(sum(salaries) / len(salaries))
-        grouped_vacancies = {
-            "vacancies_found": total_vacansies,
-            "vacancies_processed": len(salaries),
-            "salary_avg": int(sum(salaries) / len(salaries)),
-        }
-        grouped_vacancy[vacancy] = grouped_vacancies
+        if salaries:
+            salary_avg = int(sum(salaries) / len(salaries))
+            grouped_vacancies = {
+                "vacancies_found": total_vacansies,
+                "vacancies_processed": len(salaries),
+                "salary_avg": salary_avg,
+            }
+            grouped_vacancy[vacancy] = grouped_vacancies
     return grouped_vacancy
 
 
-def rouping_vacancies_hh(vacancies, period):
+def grouping_vacancies_hh(vacancies, period):
     grouped_vacancy = {}
-
     for vacancy in vacancies:
         total_vacansies, salaries = predict_rub_salary_hh(vacancy, period)
-        grouped_vacancies = {
-            "vacancies_found": total_vacansies,
-            "vacancies_processed": len(salaries),
-            "salary_avg": int(sum(salaries) / len(salaries)),
-        }
-    grouped_vacancy[vacancy] = grouped_vacancies
+        if salaries:
+            grouped_vacancies = {
+                "vacancies_found": total_vacansies,
+                "vacancies_processed": len(salaries),
+                "salary_avg": int(sum(salaries) / len(salaries)),
+            }
+            grouped_vacancy[vacancy] = grouped_vacancies
     return grouped_vacancy
 
 
