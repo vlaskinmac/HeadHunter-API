@@ -14,6 +14,7 @@ from terminaltables import AsciiTable
 
 
 def predict_avg_salary(salary_from, salary_to):
+    # print(salary_from, salary_to)
     if salary_from or salary_to:
         if not salary_from:
             expected_salary = salary_to * 0.8
@@ -67,33 +68,17 @@ def predict_rub_salary_sj(vacancy, token, period):
         "count": 100,
     }
     for page in count():
-
         param['page'] = page
-        print(param['page'])
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
         collecting_vacancies = response_page.json()
-        pprint(collecting_vacancies)
-        print(collecting_vacancies["total"])
-        if collecting_vacancies['more']:
-            break
-        # if collecting_vacancies['more']:
-        #     if page >= collecting_vacancies["total"]:
-        #         break
-        # if page >= collecting_vacancies["total"]:
-        #     break
-
         for vacancy in collecting_vacancies["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
                 salaries.append(expected_salary)
-
-        # sj_collecting_vacancies = collecting_vacancies["total"]
-    # return sj_collecting_vacancies, salaries
-    # print(salaries)
-
-        print(collecting_vacancies["total"])
+        if not collecting_vacancies['more']:
+            break
     return collecting_vacancies["total"], salaries
 
 
@@ -101,6 +86,9 @@ def rouping_vacancies_sj(vacancies, token, period):
     grouped_vacancy = {}
     for vacancy in vacancies:
         total_vacansies, salaries = predict_rub_salary_sj(vacancy, token, period)
+        # print(salaries)
+        # if salaries:
+        # salary_avg = int(sum(salaries) / len(salaries))
         grouped_vacancies = {
             "vacancies_found": total_vacansies,
             "vacancies_processed": len(salaries),
@@ -114,14 +102,13 @@ def rouping_vacancies_hh(vacancies, period):
     grouped_vacancy = {}
 
     for vacancy in vacancies:
-
         total_vacansies, salaries = predict_rub_salary_hh(vacancy, period)
         grouped_vacancies = {
             "vacancies_found": total_vacansies,
             "vacancies_processed": len(salaries),
             "salary_avg": int(sum(salaries) / len(salaries)),
         }
-        grouped_vacancy[vacancy] = grouped_vacancies
+    grouped_vacancy[vacancy] = grouped_vacancies
     return grouped_vacancy
 
 
@@ -129,9 +116,7 @@ def get_vacancy_from_user():
     parser = argparse.ArgumentParser(
         description="The Code collects salary figures for vacancies from two sources: HeadHunter, SuperJob."
     )
-    # vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
-    vacancies = ["python"]
-    # vacancies = ["golang"]
+    vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
     parser.add_argument(
         "-v", "--vacancy", nargs="+", default=vacancies,
         help="Set the vacancies use arguments: '-v or --vacancy'"
