@@ -41,9 +41,9 @@ def predict_rub_salary_hh(vacancy, period):
             break
         for vacancy in response_vacancy["items"]:
             if vacancy["salary"] and vacancy["salary"]["currency"] == "RUR":
-                    expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
-                    if expected_salary:
-                        salaries_group.append(expected_salary)
+                expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
+                if expected_salary:
+                    salaries_group.append(expected_salary)
         param['page'] += 1
     return response_vacancy["found"], salaries_group
 
@@ -53,7 +53,7 @@ def predict_rub_salary_sj(vacancy, token, period):
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
         "X-Api-App-Id": token,
     }
-    salaries_group = []
+    salaries = []
     page = 0
     url = "https://api.superjob.ru/2.0/vacancies"
     param = {
@@ -64,9 +64,7 @@ def predict_rub_salary_sj(vacancy, token, period):
         "count": 100,
         "page": page,
     }
-
     while True:
-        print(param['page'])
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
@@ -79,11 +77,12 @@ def predict_rub_salary_sj(vacancy, token, period):
         for vacancy in collecting_vacancies_sj["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
-                salaries_group.append(expected_salary)
+                salaries.append(expected_salary)
         param['page'] += 1
-    #     sj_collecting_vacancies = collecting_vacancies_sj["total"]
+        # sj_collecting_vacancies = collecting_vacancies_sj["total"]
     # return sj_collecting_vacancies, salaries_group
-    return collecting_vacancies_sj["total"], salaries_group
+    print(collecting_vacancies_sj["total"])
+    return collecting_vacancies_sj["total"], salaries
 
 
 def rouping_vacancies_sj(collection_vacancies, token, period):
