@@ -1,9 +1,6 @@
 import argparse
-import itertools
-
 import logging
 import os
-from pprint import pprint
 
 import requests
 
