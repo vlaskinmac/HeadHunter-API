@@ -1,10 +1,13 @@
 import argparse
+import itertools
+
 import logging
 import os
 
 import requests
 
 from dotenv import load_dotenv
+from itertools import count
 from requests import HTTPError
 from terminaltables import AsciiTable
 
@@ -54,7 +57,6 @@ def predict_rub_salary_sj(vacancy, token, period):
         "X-Api-App-Id": token,
     }
     salaries = []
-    page = 0
     url = "https://api.superjob.ru/2.0/vacancies"
     param = {
         "period": period,
@@ -62,28 +64,29 @@ def predict_rub_salary_sj(vacancy, token, period):
         "keywords": vacancy,
         "currency": "rub",
         "count": 100,
-        "page": page,
     }
-    print(param['page'])
-    while True:
+    for page in count(1):
+        print(page)
+        param['page'] = page
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
         collecting_vacancies = response_page.json()
         if collecting_vacancies['more']:
             break
-        # if collecting_vacancies['more']:
-        #     if page >= collecting_vacancies["total"]:
-        #         break
-        # if page >= collecting_vacancies["total"]:
-        #     break
+        if collecting_vacancies['more']:
+            if page == collecting_vacancies["total"]:
+                break
+        if page == collecting_vacancies["total"]:
+            break
         for vacancy in collecting_vacancies["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
                 salaries.append(expected_salary)
-        param['page'] += 1
         # sj_collecting_vacancies = collecting_vacancies["total"]
     # return sj_collecting_vacancies, salaries
+    # print(salaries)
+        print(collecting_vacancies["total"])
     print(collecting_vacancies["total"])
     return collecting_vacancies["total"], salaries
 
@@ -167,8 +170,8 @@ if __name__ == "__main__":
     try:
         vacancies_sj = rouping_vacancies_sj(vacancies, token, period)
         build_table(vacancies_sj, "SuperJob")
-        vacancies_hh = rouping_vacancies_hh(vacancies, period)
-        build_table(vacancies_hh, "HeadHunter")
+        # vacancies_hh = rouping_vacancies_hh(vacancies, period)
+        # build_table(vacancies_hh, "HeadHunter")
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
 
