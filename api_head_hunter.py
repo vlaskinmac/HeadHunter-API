@@ -24,7 +24,7 @@ def predict_rub_salary_hh(vacancy, period):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
     }
-    salaries_group = []
+    salaries = []
     page = 0
     url = "https://api.hh.ru/vacancies"
     param = {
@@ -43,9 +43,9 @@ def predict_rub_salary_hh(vacancy, period):
             if vacancy["salary"] and vacancy["salary"]["currency"] == "RUR":
                 expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
                 if expected_salary:
-                    salaries_group.append(expected_salary)
+                    salaries.append(expected_salary)
         param['page'] += 1
-    return response_vacancy["found"], salaries_group
+    return response_vacancy["found"], salaries
 
 
 def predict_rub_salary_sj(vacancy, token, period):
@@ -80,7 +80,7 @@ def predict_rub_salary_sj(vacancy, token, period):
                 salaries.append(expected_salary)
         param['page'] += 1
         # sj_collecting_vacancies = collecting_vacancies_sj["total"]
-    # return sj_collecting_vacancies, salaries_group
+    # return sj_collecting_vacancies, salaries
     print(collecting_vacancies_sj["total"])
     return collecting_vacancies_sj["total"], salaries
 
