@@ -126,9 +126,9 @@ def get_vacancy_from_user():
         "-p", "--period", default=30, help="Set the period use arguments: '-p or --period'"
     )
     args = parser.parse_args()
-    args_vacancy = args.vacancy
+    vacancies = args.vacancy
     args_period = args.period
-    return args_vacancy, args_period
+    return vacancies, args_period
 
 
 def build_table(recruitment_of_vacancies, title):
