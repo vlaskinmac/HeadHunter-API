@@ -131,11 +131,11 @@ def get_vacancy_from_user():
     return vacancies, args_period
 
 
-def build_table(recruitment_of_vacancies, title):
+def build_table(statistic_of_vacancies, title):
     table = [
         ["Язык программирования", "Вакансий найдено", "Вакансий обработано", "Средняя зарплата"]
     ]
-    for language, statistic in recruitment_of_vacancies.items():
+    for language, statistic in statistic_of_vacancies.items():
         table.append(
             [
                 language, statistic['vacancies_found'],
