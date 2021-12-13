@@ -44,7 +44,7 @@ def predict_rub_salary_hh(vacancy, period):
                     expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
                     if expected_salary:
                         salaries_group.append(expected_salary)
-        page += 1
+        param['page'] += 1
     return response_vacancy["found"], salaries_group
 
 
@@ -56,15 +56,17 @@ def predict_rub_salary_sj(vacancy, token, period):
     salaries_group = []
     page = 0
     url = "https://api.superjob.ru/2.0/vacancies"
+    param = {
+        "period": period,
+        "town": "Москва",
+        "keywords": vacancy,
+        "currency": "rub",
+        "count": 100,
+        "page": page,
+    }
+
     while True:
-        param = {
-            "period": period,
-            "town": "Москва",
-            "keywords": vacancy,
-            "currency": "rub",
-            "count": 100,
-            "page": page,
-        }
+        print(param['page'])
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
@@ -78,9 +80,10 @@ def predict_rub_salary_sj(vacancy, token, period):
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
                 salaries_group.append(expected_salary)
-        page += 1
-        sj_collecting_vacancies = collecting_vacancies_sj["total"]
-    return sj_collecting_vacancies, salaries_group
+        param['page'] += 1
+    #     sj_collecting_vacancies = collecting_vacancies_sj["total"]
+    # return sj_collecting_vacancies, salaries_group
+    return collecting_vacancies_sj["total"], salaries_group
 
 
 def rouping_vacancies_sj(collection_vacancies, token, period):
