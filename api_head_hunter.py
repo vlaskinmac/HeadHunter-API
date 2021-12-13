@@ -14,7 +14,6 @@ from terminaltables import AsciiTable
 
 
 def predict_avg_salary(salary_from, salary_to):
-    # print(salary_from, salary_to)
     if salary_from or salary_to:
         if not salary_from:
             expected_salary = salary_to * 0.8
@@ -30,14 +29,13 @@ def predict_rub_salary_hh(vacancy, period):
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
     }
     salaries = []
-    page = 0
     url = "https://api.hh.ru/vacancies"
     param = {
         "text": vacancy,
         "period": period,
-        "page": page,
     }
-    while True:
+    for page in count():
+        param['page'] = page
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
@@ -49,7 +47,6 @@ def predict_rub_salary_hh(vacancy, period):
                 expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
                 if expected_salary:
                     salaries.append(expected_salary)
-        param['page'] += 1
     return response_vacancy["found"], salaries
 
 
@@ -145,7 +142,7 @@ def build_table(statistic_of_vacancies, title):
     table_instance.justify_columns[3] = "right"
     table_instance.justify_columns[1] = "center"
     table_instance.justify_columns[2] = "center"
-    print(table_instance.table)
+    return table_instance.table
 
 
 if __name__ == "__main__":
@@ -159,10 +156,10 @@ if __name__ == "__main__":
     token = os.getenv("API_KEY_SUPERJOB")
     vacancies, period = get_vacancy_from_user()
     try:
-        vacancies_sj = rouping_vacancies_sj(vacancies, token, period)
-        build_table(vacancies_sj, "SuperJob")
-        # vacancies_hh = rouping_vacancies_hh(vacancies, period)
-        # build_table(vacancies_hh, "HeadHunter")
+        vacancies_sj = collects_statistics_sj(vacancies, token, period)
+        print(build_table(vacancies_sj, "SuperJob"))
+        vacancies_hh = collects_statistics_hh(vacancies, period)
+        print(build_table(vacancies_hh, "HeadHunter"))
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
 
