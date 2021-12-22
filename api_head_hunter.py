@@ -153,9 +153,9 @@ if __name__ == "__main__":
     token = os.getenv("API_KEY_SUPERJOB")
     vacancies, period = get_vacancy_from_user()
     try:
-        vacancies_sj = collects_statistics_sj(vacancies, token, period)
+        vacancies_sj = collect_statistics_sj(vacancies, token, period)
         print(build_table(vacancies_sj, "SuperJob"))
-        vacancies_hh = collects_statistics_hh(vacancies, period)
+        vacancies_hh = collect_statistics_hh(vacancies, period)
         print(build_table(vacancies_hh, "HeadHunter"))
     except (HTTPError, TypeError, KeyError) as exc:
         logging.warning(exc)
