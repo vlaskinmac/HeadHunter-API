@@ -37,13 +37,14 @@ def predict_rub_salary_hh(vacancy, period):
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
         response_vacancy = response_page.json()
-        if page == response_vacancy["pages"]-1:
-            break
+
         for vacancy in response_vacancy["items"]:
             if vacancy["salary"] and vacancy["salary"]["currency"] == "RUR":
                 expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
                 if expected_salary:
                     salaries.append(expected_salary)
+        if page == response_vacancy["pages"]-1:
+            break
     return response_vacancy["found"], salaries
 
 
