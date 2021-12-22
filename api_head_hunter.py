@@ -32,7 +32,7 @@ def predict_rub_salary_hh(vacancy, period):
         "period": period,
     }
     for page in count():
-        param['page'] = page
+        param["page"] = page
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
@@ -63,7 +63,7 @@ def predict_rub_salary_sj(vacancy, token, period):
         "count": 100,
     }
     for page in count():
-        param['page'] = page
+        param["page"] = page
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
@@ -72,7 +72,7 @@ def predict_rub_salary_sj(vacancy, token, period):
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
                 salaries.append(expected_salary)
-        if not response_vacancy['more']:
+        if not response_vacancy["more"]:
             break
     return response_vacancy["total"], salaries
 
@@ -112,10 +112,10 @@ def get_vacancy_from_user():
     vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
     parser.add_argument(
         "-v", "--vacancy", nargs="+", default=vacancies,
-        help="Set the vacancies use arguments: '-v or --vacancy'"
+        help="Set the vacancies use arguments: -v or --vacancy"
     )
     parser.add_argument(
-        "-p", "--period", default=30, help="Set the period use arguments: '-p or --period'"
+        "-p", "--period", default=30, help="Set the period use arguments: -p or --period"
     )
     args = parser.parse_args()
     vacancies = args.vacancy
@@ -130,7 +130,7 @@ def build_table(statistic_of_vacancies, title):
     for language, statistic in statistic_of_vacancies.items():
         table.append(
             [
-                language, statistic['vacancies_found'],
+                language, statistic["vacancies_found"],
                 statistic["vacancies_processed"],
                 statistic["avg_salary"],
             ]
