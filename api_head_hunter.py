@@ -80,11 +80,11 @@ def predict_rub_salary_sj(vacancy, token, period):
 def collect_statistics_sj(vacancies, token, period):
     grouped_vacancies = {}
     for vacancy in vacancies:
-        total_vacansies, salaries = predict_rub_salary_sj(vacancy, token, period)
+        total_vacancies, salaries = predict_rub_salary_sj(vacancy, token, period)
         if salaries:
             avg_salary = int(sum(salaries) / len(salaries))
             grouped_vacancies = {
-                "vacancies_found": total_vacansies,
+                "vacancies_found": total_vacancies,
                 "vacancies_processed": len(salaries),
                 "avg_salary": avg_salary,
             }
@@ -95,10 +95,10 @@ def collect_statistics_sj(vacancies, token, period):
 def collect_statistics_hh(vacancies, period):
     grouped_vacancies = {}
     for vacancy in vacancies:
-        total_vacansies, salaries = predict_rub_salary_hh(vacancy, period)
+        total_vacancies, salaries = predict_rub_salary_hh(vacancy, period)
         if salaries:
             grouped_vacancies = {
-                "vacancies_found": total_vacansies,
+                "vacancies_found": total_vacancies,
                 "vacancies_processed": len(salaries),
                 "avg_salary": int(sum(salaries) / len(salaries)),
             }
