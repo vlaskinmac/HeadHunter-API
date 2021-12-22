@@ -77,7 +77,7 @@ def predict_rub_salary_sj(vacancy, token, period):
 
 
 def collects_statistics_sj(vacancies, token, period):
-    grouped_vacancy = {}
+    grouped_vacancies = {}
     for vacancy in vacancies:
         total_vacansies, salaries = predict_rub_salary_sj(vacancy, token, period)
         if salaries:
@@ -87,12 +87,12 @@ def collects_statistics_sj(vacancies, token, period):
                 "vacancies_processed": len(salaries),
                 "salary_avg": salary_avg,
             }
-            grouped_vacancy[vacancy] = grouped_vacancies
-    return grouped_vacancy
+
+    return grouped_vacancies
 
 
 def collects_statistics_hh(vacancies, period):
-    grouped_vacancy = {}
+    grouped_vacancies = {}
     for vacancy in vacancies:
         total_vacansies, salaries = predict_rub_salary_hh(vacancy, period)
         if salaries:
@@ -101,8 +101,7 @@ def collects_statistics_hh(vacancies, period):
                 "vacancies_processed": len(salaries),
                 "salary_avg": int(sum(salaries) / len(salaries)),
             }
-            grouped_vacancy[vacancy] = grouped_vacancies
-    return grouped_vacancy
+    return grouped_vacancies
 
 
 def get_vacancy_from_user():
