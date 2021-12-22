@@ -66,14 +66,14 @@ def predict_rub_salary_sj(vacancy, token, period):
         response_page = requests.get(url, params=param, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
-        collecting_vacancies = response_page.json()
-        for vacancy in collecting_vacancies["objects"]:
+        response_vacancy = response_page.json()
+        for vacancy in response_vacancy["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
                 salaries.append(expected_salary)
-        if not collecting_vacancies['more']:
+        if not response_vacancy['more']:
             break
-    return collecting_vacancies["total"], salaries
+    return response_vacancy["total"], salaries
 
 
 def collects_statistics_sj(vacancies, token, period):
@@ -81,11 +81,11 @@ def collects_statistics_sj(vacancies, token, period):
     for vacancy in vacancies:
         total_vacansies, salaries = predict_rub_salary_sj(vacancy, token, period)
         if salaries:
-            salary_avg = int(sum(salaries) / len(salaries))
+            avg_salary = int(sum(salaries) / len(salaries))
             grouped_vacancies = {
                 "vacancies_found": total_vacansies,
                 "vacancies_processed": len(salaries),
-                "salary_avg": salary_avg,
+                "avg_salary": avg_salary,
             }
 
     return grouped_vacancies
@@ -99,7 +99,7 @@ def collects_statistics_hh(vacancies, period):
             grouped_vacancies = {
                 "vacancies_found": total_vacansies,
                 "vacancies_processed": len(salaries),
-                "salary_avg": int(sum(salaries) / len(salaries)),
+                "avg_salary": int(sum(salaries) / len(salaries)),
             }
     return grouped_vacancies
 
@@ -131,7 +131,7 @@ def build_table(statistic_of_vacancies, title):
             [
                 language, statistic['vacancies_found'],
                 statistic["vacancies_processed"],
-                statistic["salary_avg"],
+                statistic["avg_salary"],
             ]
         )
     table_instance = AsciiTable(table, title)
