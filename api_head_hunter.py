@@ -27,25 +27,25 @@ def predict_rub_salary_hh(vacancy, period):
     }
     salaries = []
     url = "https://api.hh.ru/vacancies"
-    param = {
+    params = {
         "text": vacancy,
         "period": period,
     }
     for page in count():
-        param["page"] = page
-        response_page = requests.get(url, params=param, headers=headers)
+        params["page"] = page
+        response_page = requests.get(url, params=params, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
-        response_vacancy = response_page.json()
+        response_vacancies = response_page.json()
 
-        for vacancy in response_vacancy["items"]:
+        for vacancy in response_vacancies["items"]:
             if vacancy["salary"] and vacancy["salary"]["currency"] == "RUR":
                 expected_salary = predict_avg_salary(vacancy["salary"]["from"], vacancy["salary"]["to"])
                 if expected_salary:
                     salaries.append(expected_salary)
-        if page == response_vacancy["pages"]-1:
+        if page == response_vacancies["pages"]-1:
             break
-    return response_vacancy["found"], salaries
+    return response_vacancies["found"], salaries
 
 
 def predict_rub_salary_sj(vacancy, token, period):
@@ -55,7 +55,7 @@ def predict_rub_salary_sj(vacancy, token, period):
     }
     salaries = []
     url = "https://api.superjob.ru/2.0/vacancies"
-    param = {
+    params = {
         "period": period,
         "town": "Москва",
         "keywords": vacancy,
@@ -63,18 +63,18 @@ def predict_rub_salary_sj(vacancy, token, period):
         "count": 100,
     }
     for page in count():
-        param["page"] = page
-        response_page = requests.get(url, params=param, headers=headers)
+        params["page"] = page
+        response_page = requests.get(url, params=params, headers=headers)
         response_page.raise_for_status()
         logging.warning(response_page.status_code)
-        response_vacancy = response_page.json()
-        for vacancy in response_vacancy["objects"]:
+        response_vacancies = response_page.json()
+        for vacancy in response_vacancies["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
                 salaries.append(expected_salary)
-        if not response_vacancy["more"]:
+        if not response_vacancies["more"]:
             break
-    return response_vacancy["total"], salaries
+    return response_vacancies["total"], salaries
 
 
 def collect_statistics_sj(vacancies, token, period):
