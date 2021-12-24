@@ -88,6 +88,7 @@ def collect_statistics_sj(vacancies, token, period):
                 "vacancies_processed": len(salaries),
                 "avg_salary": avg_salary,
             }
+            grouped_vacancies[vacancy] = grouped_vacancies
 
     return grouped_vacancies
 
@@ -102,6 +103,7 @@ def collect_statistics_hh(vacancies, period):
                 "vacancies_processed": len(salaries),
                 "avg_salary": int(sum(salaries) / len(salaries)),
             }
+            grouped_vacancies[vacancy] = grouped_vacancies
     return grouped_vacancies
 
 
