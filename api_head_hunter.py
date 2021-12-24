@@ -83,13 +83,12 @@ def collect_statistics_sj(vacancies, token, period):
         total_vacancies, salaries = predict_rub_salary_sj(vacancy, token, period)
         if salaries:
             avg_salary = int(sum(salaries) / len(salaries))
-            grouped_vacancies = {
+            vacancy_statistic = {
                 "vacancies_found": total_vacancies,
                 "vacancies_processed": len(salaries),
                 "avg_salary": avg_salary,
             }
-            grouped_vacancies[vacancy] = grouped_vacancies
-
+            grouped_vacancies[vacancy] = vacancy_statistic
     return grouped_vacancies
 
 
@@ -98,12 +97,12 @@ def collect_statistics_hh(vacancies, period):
     for vacancy in vacancies:
         total_vacancies, salaries = predict_rub_salary_hh(vacancy, period)
         if salaries:
-            grouped_vacancies = {
+            vacancy_statistic = {
                 "vacancies_found": total_vacancies,
                 "vacancies_processed": len(salaries),
                 "avg_salary": int(sum(salaries) / len(salaries)),
             }
-            grouped_vacancies[vacancy] = grouped_vacancies
+            grouped_vacancies[vacancy] = vacancy_statistic
     return grouped_vacancies
 
 
@@ -112,6 +111,7 @@ def get_vacancy_from_user():
         description="The Code collects salary figures for vacancies from two sources: HeadHunter, SuperJob."
     )
     vacancies = ["python", "javascript", "golang", "java", "c++", "typescript", "c#"]
+
     parser.add_argument(
         "-v", "--vacancy", nargs="+", default=vacancies,
         help="Set the vacancies use arguments: -v or --vacancy"
