@@ -33,10 +33,10 @@ def predict_rub_salary_hh(vacancy, period):
     }
     for page in count():
         params["page"] = page
-        response_page = requests.get(url, params=params, headers=headers)
-        response_page.raise_for_status()
-        logging.warning(response_page.status_code)
-        response_vacancies = response_page.json()
+        response_of_the_page = requests.get(url, params=params, headers=headers)
+        response_of_the_page.raise_for_status()
+        logging.warning(response_of_the_page.status_code)
+        response_vacancies = response_of_the_page.json()
 
         for vacancy in response_vacancies["items"]:
             if vacancy["salary"] and vacancy["salary"]["currency"] == "RUR":
@@ -64,10 +64,10 @@ def predict_rub_salary_sj(vacancy, token, period):
     }
     for page in count():
         params["page"] = page
-        response_page = requests.get(url, params=params, headers=headers)
-        response_page.raise_for_status()
-        logging.warning(response_page.status_code)
-        response_vacancies = response_page.json()
+        response_of_the_page = requests.get(url, params=params, headers=headers)
+        response_of_the_page.raise_for_status()
+        logging.warning(response_of_the_page.status_code)
+        response_vacancies = response_of_the_page.json()
         for vacancy in response_vacancies["objects"]:
             expected_salary = predict_avg_salary(vacancy["payment_from"], vacancy["payment_to"])
             if expected_salary:
